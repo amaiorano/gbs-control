@@ -4013,6 +4013,9 @@ void doPostPresetLoadSteps()
     GBS::INTERRUPT_CONTROL_00::write(0x00);
 
     OutputComponentOrVGA();
+    // amaiorano: HACK to fix colors after preset load (or reset).
+    enableScanlines();
+    disableScanlines();
 
     // presetPreference 10 means the user prefers bypass mode at startup
     // it's best to run a normal format detect > apply preset loop, then enter bypass mode
