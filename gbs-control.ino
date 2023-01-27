@@ -1,3 +1,19 @@
+#define AMAIORANO_FIX_COLORS_ON_RESET 0
+#define AMAIORANO_OUTPUT_INVERTED_LED_ON_D7 1
+#define THIS_DEVICE_MASTER
+
+#if AMAIORANO_OUTPUT_INVERTED_LED_ON_D7
+#define AMAIORANO_LEDON \
+    pinMode(D7, OUTPUT); \
+    digitalWrite(D7, HIGH)
+#define AMAIORANO_LEDOFF \
+    digitalWrite(D7, LOW); \
+    pinMode(D7, INPUT)
+#else
+#define AMAIORANO_LEDON (void)
+#define AMAIORANO_LEDOFF (void)
+#endif
+
 #include "ntsc_240p.h"
 #include "pal_240p.h"
 #include "ntsc_720x480.h"
@@ -91,7 +107,7 @@ static unsigned long lastVsyncLock = millis();
 #include "src/si5351mcu.h"
 Si5351mcu Si;
 
-#define THIS_DEVICE_MASTER
+//#define THIS_DEVICE_MASTER
 #ifdef THIS_DEVICE_MASTER
 const char *ap_ssid = "gbscontrol";
 const char *ap_password = "qqqqqqqq";
@@ -128,10 +144,12 @@ PersWiFiManager persWM(server, dnsServer);
 // SDA = D2 (Lolin), D14 (Wemos D1) // ESP8266 Arduino default map: SDA
 #define LEDON                     \
     pinMode(LED_BUILTIN, OUTPUT); \
-    digitalWrite(LED_BUILTIN, LOW)
+    digitalWrite(LED_BUILTIN, LOW); \
+    AMAIORANO_LEDON
 #define LEDOFF                       \
     digitalWrite(LED_BUILTIN, HIGH); \
-    pinMode(LED_BUILTIN, INPUT)
+    pinMode(LED_BUILTIN, INPUT); \
+    AMAIORANO_LEDOFF
 
 // fast ESP8266 digitalRead (21 cycles vs 77), *should* work with all possible input pins
 // but only "D7" and "D6" have been tested so far
@@ -4075,9 +4093,12 @@ void doPostPresetLoadSteps()
     GBS::INTERRUPT_CONTROL_00::write(0x00);
 
     OutputComponentOrVGA();
+#if AMAIORANO_FIX_COLORS_ON_RESET
     // amaiorano: HACK to fix colors after preset load (or reset).
+    // Seems necessary only for YPbPr output mode.
     enableScanlines();
     disableScanlines();
+#endif
 
     // presetPreference 10 means the user prefers bypass mode at startup
     // it's best to run a normal format detect > apply preset loop, then enter bypass mode
